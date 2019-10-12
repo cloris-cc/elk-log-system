@@ -17,7 +17,8 @@ public class ElkLogSystemApplication {
 
     @GetMapping("/test")
     public String sayHello(){
-        log.info("info log: hello");
+        log.info("I don't wanna print logs...");
+        log.info("更改应用名");
         return "hello";
     }
 
