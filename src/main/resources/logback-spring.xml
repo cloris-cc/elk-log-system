@@ -1,17 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--该日志将日志级别不同的log信息保存到不同的文件中 -->
 <configuration>
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
 
+    <!-- 获取 application.yml 中的属性 -->
     <springProperty scope="context" name="springAppName"
                     source="spring.application.name"/>
 
-    <!-- 日志在工程中的输出位置 -->
-    <property name="LOG_FILE" value="${BUILD_FOLDER:-build}/${springAppName}"/>
+    <!-- 日志保存路径 -->
+    <!-- 此处为将日志保存在 C:/log 路径下，需要自行修改 -->
+    <property name="LOG_PATH" value="C:/log"/>
 
-    <!-- 控制台的日志输出样式 -->
+    <!-- 日志输出样式 -->
     <property name="CONSOLE_LOG_PATTERN"
               value="${CONSOLE_LOG_PATTERN:-%clr(%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
+    <property name="FILE_LOG_PATTERN"
+              value="${FILE_LOG_PATTERN:-%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%t] %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
+
+
 
     <!-- 控制台输出 -->
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
@@ -25,39 +30,38 @@
         </encoder>
     </appender>
 
-    <!-- 为logstash输出的JSON格式的Appender -->
-    <appender name="logstash"
-              class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-        <destination>47.94.128.66:5044</destination>
-        <!-- 日志输出编码 -->
-        <encoder
-                class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-            <providers>
-                <timestamp>
-                    <timeZone>UTC</timeZone>
-                </timestamp>
-                <pattern>
-                    <pattern>
-                        {
-                        "severity": "%level",
-                        "service": "${springAppName:-}",
-                        "trace": "%X{X-B3-TraceId:-}",
-                        "span": "%X{X-B3-SpanId:-}",
-                        "exportable": "%X{X-Span-Export:-}",
-                        "pid": "${PID:-}",
-                        "thread": "%thread",
-                        "class": "%logger{40}",
-                        "rest": "%message"
-                        }
-                    </pattern>
-                </pattern>
-            </providers>
+    <!-- 本地日志 -->
+    <appender name="local" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 存放路径 -->
+        <File>${LOG_PATH}/${springAppName}.log</File>
+        <!-- 滚动策略，按照时间滚动 TimeBasedRollingPolicy -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!--文件路径,定义了日志的切分方式——把每一天的日志归档到一个文件中,以防止日志填满整个磁盘空间-->
+            <FileNamePattern>${LOG_PATH}/${springAppName}.%d{yyyy-MM-dd}.%i.log</FileNamePattern>
+            <!-- 单个日志文件的上限大小，超过自动按上述格式 %i 生成新的日志文件 -->
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <!--只保留最近 30 天的日志-->
+            <maxHistory>30</maxHistory>
+            <!--用来指定日志文件的上限大小，那么到了这个值，就会删除旧的日志-->
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <!--日志输出编码格式化-->
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
         </encoder>
     </appender>
 
-    <!-- 日志输出级别 -->
+
+    <!-- 日志输出 ROOT 级别 -->
     <root level="INFO">
         <appender-ref ref="console"/>
-        <appender-ref ref="logstash"/>
+        <appender-ref ref="local"/>
     </root>
+
+    <!-- 日志输出 PACKAGE 级别 -->
+    <!-- 在此处配置需要 DEBUG 级别日志的包路径，以下为示例 -->
+    <!-- <logger name="cn.teamwang.elk.log" level="DEBUG" /> -->
 </configuration>

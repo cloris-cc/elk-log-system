@@ -1,5 +1,6 @@
 package cn.teamwang.elk;
 
+import cn.teamwang.elk.log.DebugLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -17,8 +18,10 @@ public class ElkLogSystemApplication {
 
     @GetMapping("/test")
     public String sayHello(){
-        log.info("I don't wanna print logs...");
-        log.info("更改应用名");
+//        DebugLog debugLog = new DebugLog();
+//        debugLog.output();
+//        log.info("I don't wanna print logs...");
+//        log.info("更改应用名");
         return "hello";
     }
 
